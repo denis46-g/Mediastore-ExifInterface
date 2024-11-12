@@ -10,6 +10,7 @@ class HomeViewModel : ViewModel() {
 
     var imageUri: Uri? = null
     var imageIsLoaded: Boolean = false
+    var exifData: ExifData? = null
 
     fun loadImageFromMediaStore(getImageLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>) {
         val intent = Intent(Intent.ACTION_PICK).apply {

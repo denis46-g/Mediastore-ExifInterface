@@ -74,12 +74,22 @@ fun HomeScreen(
     val imageIsLoaded = remember { mutableStateOf(viewModel.imageIsLoaded) }
     var imageUri by remember { mutableStateOf<Uri?>(viewModel.imageUri) } // URI загруженного изображения
 
+    // EXIF данные
+    var exifData by remember { mutableStateOf<ExifData?>(viewModel.exifData) }
+
     val getImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             imageUri = result.data?.data // Получаем URI изображения
             imageIsLoaded.value = true
             viewModel.imageUri = imageUri // Сохраняем URI в ViewModel
             viewModel.imageIsLoaded = imageIsLoaded.value // Сохраняем состояние загрузки в ViewModel
+
+            imageUri?.let { uri ->
+                // Получаем Bitmap и EXIF данные
+                val data = getBitmapFromUri(uri, context)?.second
+                exifData = data // Сохраняем EXIF данные для отображения
+                viewModel.exifData = data
+            }
         }
     }
 
@@ -101,12 +111,12 @@ fun HomeScreen(
             ) {
                 Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_extra_large)))
                 Column(
-                    modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
+                    modifier = modifier.padding(dimensionResource(id = R.dimen.padding_extra_small)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
                 ) {
                     // Отображение изображения, если оно выбрано
                     imageUri?.let { uri ->
-                        val bitmap = getBitmapFromUri(uri, context) // Получаем Bitmap
+                        val bitmap = getBitmapFromUri(uri, context)?.first // Получаем Bitmap
                         val imageBitmap = bitmap?.asImageBitmap() // Преобразуем в ImageBitmap
                         if (imageBitmap != null) {
                             Image(
@@ -115,9 +125,23 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(250.dp) // Можно настроить высоту
-                                    .padding(dimensionResource(id = R.dimen.padding_medium)),
+                                    .padding(dimensionResource(id = R.dimen.padding_large)),
                                 contentScale = ContentScale.Crop
                             )
+                        }
+                    }
+
+                    // Отображение EXIF данных, если они доступны
+                    exifData?.let { data ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text("Date: ${data.creationDate ?: "No data"}")
+                            Text("Latitude: ${data.latitude ?: "No data"}")
+                            Text("Longitude: ${data.longitude ?: "No data"}")
+                            Text("Device: ${data.device ?: "No data"}")
+                            Text("Device model: ${data.model ?: "No data"}")
                         }
                     }
 
@@ -157,21 +181,36 @@ fun HomeScreen(
     }
 }
 
-fun getBitmapFromUri(uri: Uri, context: Context): Bitmap? {
+data class ExifData(
+    val creationDate: String?,
+    val latitude: String?,
+    val longitude: String?,
+    val device: String?,
+    val model: String?
+)
+
+fun getBitmapFromUri(uri: Uri, context: Context): Pair<Bitmap, ExifData>? {
     // Получаем Bitmap из URI
     val inputStream = context.contentResolver.openInputStream(uri)
     val bitmap = BitmapFactory.decodeStream(inputStream)
 
     // Получаем EXIF данные для изображения
     val exif = ExifInterface(context.contentResolver.openInputStream(uri)!!)
-    val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+    val creationDate = exif.getAttribute(ExifInterface.TAG_DATETIME)    // Дата создания
+    val latitude = exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE)    // Широта
+    val longitude = exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)   // Долгота
+    val device = exif.getAttribute(ExifInterface.TAG_MAKE)              // Устройство
+    val model = exif.getAttribute(ExifInterface.TAG_MODEL)              // Модель устройства
 
+    val exifData = ExifData(creationDate, latitude, longitude, device, model)
+
+    val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
     // Применяем поворот в зависимости от EXIF данных
     return when (orientation) {
-        ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(bitmap, 90f)
-        ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(bitmap, 180f)
-        ExifInterface.ORIENTATION_ROTATE_270 -> rotateImage(bitmap, 270f)
-        else -> bitmap // Возвращаем без изменений
+        ExifInterface.ORIENTATION_ROTATE_90 -> Pair(rotateImage(bitmap, 90f), exifData)
+        ExifInterface.ORIENTATION_ROTATE_180 -> Pair(rotateImage(bitmap, 180f), exifData)
+        ExifInterface.ORIENTATION_ROTATE_270 -> Pair(rotateImage(bitmap, 270f), exifData)
+        else -> Pair(bitmap, exifData) // Возвращаем без изменений
     }
 }
 

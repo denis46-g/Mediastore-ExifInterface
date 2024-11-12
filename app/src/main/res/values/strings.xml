@@ -6,4 +6,9 @@
     <string name="open_tags_editor">Edit Tags</string>
     <string name="save_image">Save Image</string>
     <string name="back_button">Back</string>
+    <string name="creation_date">Date</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="device">Device</string>
+    <string name="device_model">Device Model</string>
 </resources>

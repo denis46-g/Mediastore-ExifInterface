@@ -11,11 +11,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,15 +45,18 @@ fun ExifTagsEditScreen(
     viewModel: ExifTagsEditViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     Scaffold(
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediastoreTopAppBar(
                 title = stringResource(ExifTagsEditDestination.titleRes),
                 canNavigateBack = true,
-                navigateUp = onNavigateUp
+                navigateUp = onNavigateUp,
+                scrollBehavior = scrollBehavior
             )
         },
-        modifier = modifier,
         floatingActionButton = {
             Row(
                 modifier = Modifier
@@ -57,15 +65,87 @@ fun ExifTagsEditScreen(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_extra_large)))
-                Button(
-                    onClick = {
-                        //viewModel.loadImageFromMediaStore(getImageLauncher)
-                        navigateBack()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.small
+
+                Column(
+                    modifier = modifier.padding(dimensionResource(id = R.dimen.padding_extra_small)),
+                    verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
                 ) {
-                    Text(stringResource(R.string.save_image))
+
+                    OutlinedTextField(
+                        value = "date",
+                        onValueChange = {  },
+                        label = { Text(stringResource(R.string.creation_date)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = "latitude",
+                        onValueChange = {  },
+                        label = { Text(stringResource(R.string.latitude)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = "longitude",
+                        onValueChange = {  },
+                        label = { Text(stringResource(R.string.longitude)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = "device",
+                        onValueChange = {  },
+                        label = { Text(stringResource(R.string.device)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = "device model",
+                        onValueChange = {  },
+                        label = { Text(stringResource(R.string.device_model)) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = true,
+                        singleLine = true
+                    )
+                    Button(
+                        onClick = {
+                            viewModel.saveImage()
+                            navigateBack()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(stringResource(R.string.save_image))
+                    }
                 }
             }
         }
