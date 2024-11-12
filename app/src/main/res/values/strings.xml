@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Mediastore-ExifInterface</string>
+    <string name="load_image">Load image</string>
+    <string name="load_other_image">Load other image</string>
+    <string name="exif_tags_edit">Tags editor</string>
+    <string name="open_tags_editor">Edit Tags</string>
+    <string name="save_image">Save Image</string>
+    <string name="back_button">Back</string>
+</resources>
