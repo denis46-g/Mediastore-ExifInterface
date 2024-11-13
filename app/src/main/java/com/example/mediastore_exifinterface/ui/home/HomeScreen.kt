@@ -48,6 +48,9 @@ import com.example.mediastore_exifinterface.R
 import com.example.mediastore_exifinterface.ui.AppViewModelProvider
 import com.example.mediastore_exifinterface.ui.navigation.NavigationDestination
 import android.graphics.Matrix
+import com.example.mediastore_exifinterface.ui.tags.exportDataFromMain
+import com.example.mediastore_exifinterface.ui.tags.newUri
+import com.example.mediastore_exifinterface.ui.tags.uriUpdated
 
 object HomeDestination : NavigationDestination {
     override val route = "home"
@@ -90,6 +93,8 @@ fun HomeScreen(
                 exifData = data // Сохраняем EXIF данные для отображения
                 viewModel.exifData = data
             }
+
+            uriUpdated = false
         }
     }
 
@@ -115,8 +120,40 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
                 ) {
                     // Отображение изображения, если оно выбрано
-                    imageUri?.let { uri ->
-                        val bitmap = getBitmapFromUri(uri, context)?.first // Получаем Bitmap
+                    if(!uriUpdated){
+                        imageUri?.let { uri ->
+                            val bitmap = getBitmapFromUri(uri, context)?.first // Получаем Bitmap
+                            val imageBitmap = bitmap?.asImageBitmap() // Преобразуем в ImageBitmap
+                            if (imageBitmap != null) {
+                                Image(
+                                    bitmap = imageBitmap,
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(250.dp) // Можно настроить высоту
+                                        .padding(dimensionResource(id = R.dimen.padding_large)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+
+                        // Отображение EXIF данных, если они доступны
+                        exifData?.let { data ->
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text("Date: ${data.creationDate ?: "No data"}")
+                                Text("Latitude: ${data.latitude ?: "No data"}")
+                                Text("Longitude: ${data.longitude ?: "No data"}")
+                                Text("Device: ${data.device ?: "No data"}")
+                                Text("Device model: ${data.model ?: "No data"}")
+                            }
+                        }
+                    }
+                    else{
+                        val bitmap =
+                            newUri?.let { getBitmapFromUri(it, context)?.first } // Получаем Bitmap
                         val imageBitmap = bitmap?.asImageBitmap() // Преобразуем в ImageBitmap
                         if (imageBitmap != null) {
                             Image(
@@ -129,25 +166,34 @@ fun HomeScreen(
                                 contentScale = ContentScale.Crop
                             )
                         }
-                    }
 
-                    // Отображение EXIF данных, если они доступны
-                    exifData?.let { data ->
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            horizontalAlignment = Alignment.Start
-                        ) {
-                            Text("Date: ${data.creationDate ?: "No data"}")
-                            Text("Latitude: ${data.latitude ?: "No data"}")
-                            Text("Longitude: ${data.longitude ?: "No data"}")
-                            Text("Device: ${data.device ?: "No data"}")
-                            Text("Device model: ${data.model ?: "No data"}")
+
+                        // Отображение EXIF данных, если они доступны
+                        exportDataFromMain?.second?.let { data ->
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text("Date: ${data.creationDate ?: "No data"}")
+                                Text("Latitude: ${data.latitude ?: "No data"}")
+                                Text("Longitude: ${data.longitude ?: "No data"}")
+                                Text("Device: ${data.device ?: "No data"}")
+                                Text("Device model: ${data.model ?: "No data"}")
+                            }
                         }
                     }
 
                     if(imageIsLoaded.value || image_is_loaded) {
                         Button(
                             onClick = {
+                                if(!uriUpdated){
+                                    imageUri?.let { uri ->
+                                        exportDataFromMain = getBitmapFromUri(uri, context)
+                                    }
+                                }
+                                else{
+                                    exportDataFromMain = newUri?.let { getBitmapFromUri(it, context) }
+                                }
                                 navigateToExifTagsEdit()
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -196,11 +242,11 @@ fun getBitmapFromUri(uri: Uri, context: Context): Pair<Bitmap, ExifData>? {
 
     // Получаем EXIF данные для изображения
     val exif = ExifInterface(context.contentResolver.openInputStream(uri)!!)
-    val creationDate = exif.getAttribute(ExifInterface.TAG_DATETIME)    // Дата создания
-    val latitude = exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE)    // Широта
-    val longitude = exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)   // Долгота
-    val device = exif.getAttribute(ExifInterface.TAG_MAKE)              // Устройство
-    val model = exif.getAttribute(ExifInterface.TAG_MODEL)              // Модель устройства
+    val creationDate = exif.getAttribute(ExifInterface.TAG_DATETIME) ?: "No data"   // Дата создания
+    val latitude = exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE) ?: "No data"    // Широта
+    val longitude = exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE) ?: "No data"   // Долгота
+    val device = exif.getAttribute(ExifInterface.TAG_MAKE) ?: "No data"         // Устройство
+    val model = exif.getAttribute(ExifInterface.TAG_MODEL) ?: "No data"              // Модель устройства
 
     val exifData = ExifData(creationDate, latitude, longitude, device, model)
 
