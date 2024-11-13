@@ -3,6 +3,7 @@ package com.example.mediastore_exifinterface.ui.tags
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mediastore_exifinterface.MediastoreTopAppBar
@@ -71,8 +73,6 @@ fun ExifTagsEditScreen(
     val longitude = remember { mutableStateOf(exportDataFromMain?.second?.longitude ?: "No data") }
     val device = remember { mutableStateOf(exportDataFromMain?.second?.device ?: "No data") }
     val model = remember { mutableStateOf(exportDataFromMain?.second?.model ?: "No data") }
-
-    val newFileName by viewModel.newFilename.observeAsState(initial = "")
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -175,13 +175,17 @@ fun ExifTagsEditScreen(
                                         model = model.value
                                     ))
                             }
+
                             viewModel.saveImage(context, exportDataFromMain)
 
+                            if(File(newFilename).exists())
+                                Log.d("EEEEEEE", "exists!!!!!!!")
+
                             // Если нужно, установите новый URI при получении нового имени файла
-                            /*if (newFileName.isNotEmpty()) {
-                                newUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", File(newFileName))
+                            if (newFilename.isNotEmpty()) {
+                                newUri = File(newFilename).toUri()
                                 uriUpdated = true
-                            }*/
+                            }
                             navigateBack()
                         },
                         modifier = Modifier.fillMaxWidth(),

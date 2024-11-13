@@ -82,7 +82,7 @@ fun HomeScreen(
 
     val getImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            imageUri = result.data?.data // Получаем URI изображения
+            imageUri = result.data?.data
             imageIsLoaded.value = true
             viewModel.imageUri = imageUri // Сохраняем URI в ViewModel
             viewModel.imageIsLoaded = imageIsLoaded.value // Сохраняем состояние загрузки в ViewModel
@@ -93,8 +93,6 @@ fun HomeScreen(
                 exifData = data // Сохраняем EXIF данные для отображения
                 viewModel.exifData = data
             }
-
-            uriUpdated = false
         }
     }
 
@@ -119,41 +117,21 @@ fun HomeScreen(
                     modifier = modifier.padding(dimensionResource(id = R.dimen.padding_extra_small)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
                 ) {
-                    // Отображение изображения, если оно выбрано
-                    if(!uriUpdated){
-                        imageUri?.let { uri ->
-                            val bitmap = getBitmapFromUri(uri, context)?.first // Получаем Bitmap
-                            val imageBitmap = bitmap?.asImageBitmap() // Преобразуем в ImageBitmap
-                            if (imageBitmap != null) {
-                                Image(
-                                    bitmap = imageBitmap,
-                                    contentDescription = "Selected Image",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(250.dp) // Можно настроить высоту
-                                        .padding(dimensionResource(id = R.dimen.padding_large)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        }
+                    if(uriUpdated) {
+                        imageUri = newUri
+                        viewModel.imageUri = imageUri
 
-                        // Отображение EXIF данных, если они доступны
-                        exifData?.let { data ->
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                Text("Date: ${data.creationDate ?: "No data"}")
-                                Text("Latitude: ${data.latitude ?: "No data"}")
-                                Text("Longitude: ${data.longitude ?: "No data"}")
-                                Text("Device: ${data.device ?: "No data"}")
-                                Text("Device model: ${data.model ?: "No data"}")
-                            }
+                        imageUri?.let { uri ->
+                            // Получаем Bitmap и EXIF данные
+                            val data = getBitmapFromUri(uri, context)?.second
+                            exifData = data // Сохраняем EXIF данные для отображения
+                            viewModel.exifData = data
                         }
+                        uriUpdated = false
                     }
-                    else{
-                        val bitmap =
-                            newUri?.let { getBitmapFromUri(it, context)?.first } // Получаем Bitmap
+                    // Отображение изображения, если оно выбрано
+                    imageUri?.let { uri ->
+                        val bitmap = getBitmapFromUri(uri, context)?.first // Получаем Bitmap
                         val imageBitmap = bitmap?.asImageBitmap() // Преобразуем в ImageBitmap
                         if (imageBitmap != null) {
                             Image(
@@ -166,33 +144,27 @@ fun HomeScreen(
                                 contentScale = ContentScale.Crop
                             )
                         }
+                    }
 
-
-                        // Отображение EXIF данных, если они доступны
-                        exportDataFromMain?.second?.let { data ->
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                horizontalAlignment = Alignment.Start
-                            ) {
-                                Text("Date: ${data.creationDate ?: "No data"}")
-                                Text("Latitude: ${data.latitude ?: "No data"}")
-                                Text("Longitude: ${data.longitude ?: "No data"}")
-                                Text("Device: ${data.device ?: "No data"}")
-                                Text("Device model: ${data.model ?: "No data"}")
-                            }
+                    // Отображение EXIF данных, если они доступны
+                    exifData?.let { data ->
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text("Date: ${data.creationDate ?: "No data"}")
+                            Text("Latitude: ${data.latitude ?: "No data"}")
+                            Text("Longitude: ${data.longitude ?: "No data"}")
+                            Text("Device: ${data.device ?: "No data"}")
+                            Text("Device model: ${data.model ?: "No data"}")
                         }
                     }
 
                     if(imageIsLoaded.value || image_is_loaded) {
                         Button(
                             onClick = {
-                                if(!uriUpdated){
-                                    imageUri?.let { uri ->
-                                        exportDataFromMain = getBitmapFromUri(uri, context)
-                                    }
-                                }
-                                else{
-                                    exportDataFromMain = newUri?.let { getBitmapFromUri(it, context) }
+                                imageUri?.let { uri ->
+                                    exportDataFromMain = getBitmapFromUri(uri, context)
                                 }
                                 navigateToExifTagsEdit()
                             },

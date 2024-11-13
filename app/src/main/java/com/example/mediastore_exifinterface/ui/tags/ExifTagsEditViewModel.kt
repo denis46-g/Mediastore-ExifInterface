@@ -13,17 +13,19 @@ import java.io.FileOutputStream
 import java.io.IOException
 import android.media.MediaScannerConnection
 import android.os.Environment
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+
+var newFilename = ""
 
 class ExifTagsEditViewModel : ViewModel() {
 
     // Используем LiveData для хранения имени файла
-    private val _newFilename = MutableLiveData<String>()
-    val newFilename: LiveData<String> get() = _newFilename // Expose as LiveData
+    //val newFilename: LiveData<String> get() = _newFilename // Expose as LiveData
 
     fun saveImage(context: Context, exportData: Pair<Bitmap, ExifData>?) {
-        viewModelScope.launch(Dispatchers.IO) { // Запускаем код в фоновом потоке
+       // viewModelScope.launch(Dispatchers.IO) { // Запускаем код в фоновом потоке
             exportData?.let { (bitmap, exifData) ->
                 // Путь к файлу для сохранения изображения
                 val filename = "${System.currentTimeMillis()}.jpg" // Генерация уникального имени
@@ -34,6 +36,9 @@ class ExifTagsEditViewModel : ViewModel() {
 
                 // Создайте файл
                 val imageFile = File(storageDir, filename)
+
+                if(!imageFile.exists())
+                    Log.d("AAAAAA", "NOT exists!!!!!!!")
 
                 // Сохранение изображения в файл
                 try {
@@ -47,12 +52,13 @@ class ExifTagsEditViewModel : ViewModel() {
                     // Теперь обновляем EXIF-теги
                     saveExifData(imageFile.absolutePath, exifData)
 
-                    _newFilename.postValue(imageFile.absolutePath)
+                    newFilename= imageFile.absolutePath
+                    Log.d("newfilename", newFilename.toString())
                 } catch (e: IOException) {
                     e.printStackTrace() // Обработка ошибок сохранения
                 }
             }
-        }
+        //}
     }
 
     private fun saveExifData(imagePath: String, exifData: ExifData) {
